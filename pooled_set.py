@@ -22,6 +22,9 @@ class Poolset():
     def __init__(self, macro_x:pd.DataFrame, micro_x:list, y:pd.DataFrame):       
         self.y_name = y.columns[1:]
         self.timeall = pd.DataFrame(y['time'])
+        self.time = pd.DataFrame(y['time'])
+        self.group = [str(i) for i in range(len(micro_x))]
+        self.microlen = len(micro_x)
         self.y = y.copy()
         self.macro_x = macro_x.copy()
         self.micro_x = {}
@@ -29,14 +32,14 @@ class Poolset():
         for i in range(len(micro_x)):
             self.micro_x[i] = micro_x[i].iloc[:,1:].copy()
         for i in range(len(micro_x)):    
-            self.micro_x[i].columns = [j+f'indiv_{i}' for j in list(micro_x[i].columns[1:])]               
+            self.micro_x[i].columns = [j+f'indiv_{i}' for j in list(micro_x[i].columns[1:])]
         self.micro_x = pd.concat(list(self.micro_x.values()),axis=1) 
         self.macro_x = self.macro_x.drop(columns=['time'])
         self.y = self.y.drop(columns=['time'])
         
         self.lag = 0
         self.timelag = pd.DataFrame(y['time'])
-        self.IE, self.TE = False, False
+        self.IE, self.TE, self.isfold = False, False, False
         self.time_start, self.time_end = y.iloc[0]['time'], y.iloc[-1]['time']
     
    
@@ -134,6 +137,7 @@ class Poolset():
         
         """
         self.TE = True
+        self.tgroup = tgroup
         self.micro_x['time'] = pd.concat([self.time['time']]*len(self.y_name), ignore_index=True)
         for t in tgroup[1:]:
             tstart = tgroup[tgroup.index(t)-1]
@@ -143,7 +147,31 @@ class Poolset():
             self.micro_x.loc[(self.micro_x['time']<=tend) & (self.micro_x['time']>tstart),t] = 1                     
         self.micro_x = self.micro_x.drop(columns=['time'])
            
-                
+        
+    def microFold(self):
+        """
+        to seperate micro_x's individual features dataframes, dummies are retained for each feature;
+        to avoid troubles, do not let the number of individual features greater than 10, especially without effects
+        
+        """
+        self.isfold = True
+        micro_x0 = []
+        if self.IE:
+            for i in list(range(self.microlen)):
+                micro_x0.append(self.micro_x.iloc[:,i])
+                micro_x0[i] = pd.concat([micro_x0[i], self.micro_x.loc[:,[col for col in self.micro_x.columns.str.startswith('group_')]]],axis=1)
+                if self.TE:
+                    micro_x0[i] = pd.concat([micro_x0[i], self.micro_x[self.tgroup[1:]]],axis=1)
+        if self.TE and not self.IE:
+            for i in list(range(self.microlen)):
+                micro_x0.append(self.micro_x.iloc[:,:-(len(self.tgroup)-1)].loc[:,[col for col in self.micro_x.columns[:len(self.y_name)*self.microlen].str.endswith(f'{i}')]])
+                micro_x0[i] = pd.concat([micro_x0[i], self.micro_x[self.tgroup[1:]]],axis=1)
+        if not self.IE and not self.TE:
+            for i in list(range(self.microlen)):
+                micro_x0.append(self.micro_x.loc[:,[col for col in self.micro_x.columns.str.endswith(f'{i}')]])
+        self.micro_x = micro_x0.copy() 
+            
+            
     def get_state(self,show):
         if show == 'lag':           
             return self.lag
@@ -153,4 +181,5 @@ class Poolset():
             return self.IE
         if show == 'TE':
             return self.TE
-        
+        if show == 'isfold':
+            return self.isfold
