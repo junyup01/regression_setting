@@ -39,8 +39,7 @@ class MicroX():
     def set_lag(self,lag):
         """
         periods lag behind, non-negative integer;
-        the data indices should be enough to lag;
-        y will not be affected
+        the data indices should be enough to lag.
         
         """
         self.lag = lag      
@@ -337,7 +336,7 @@ class YforSys():
     """
     y_sys for dependent variables of a system;
     the first column is 'time'
-    e.g. y's columns ['time','system_index']
+    e.g. y_sys's columns ['time','system_index']
     
     """
     def __init__(self, y_sys:pd.DataFrame):       
