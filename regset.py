@@ -69,7 +69,7 @@ class MicroX():
     def set_Ieffect(self,name_withgroup): 
         """
         group individuals by a nested list with self.name. 
-        e.g. name_withgroup = [[a,b],[c,d,e]]
+        e.g. name_withgroup = [['bank_A','bank_B'],['bank_C','bank_D','bank_E']]
         
         """
         if self.TE:
@@ -295,7 +295,7 @@ class YforI():
     def set_Ieffect(self,name_withgroup): 
         """
         group individuals by a nested list with self.name. 
-        e.g. name_withgroup = [[a,b],[c,d,e]]
+        e.g. name_withgroup = [['bank_A','bank_B'],['bank_C','bank_D','bank_E']]
         
         """
         self.name_withgroup = name_withgroup
